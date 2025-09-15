@@ -9,6 +9,12 @@ class User(BaseModel):
     created_at: Optional[datetime] = None
 
 
+# 로그인 요청 모델
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 # 단일 메시지의 구조를 정의
 class Message(BaseModel):
     role: str  # "system", "user", "assistant" 중 하나
