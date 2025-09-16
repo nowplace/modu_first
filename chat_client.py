@@ -149,6 +149,7 @@ class ChatClient:
 
             if response.status_code == 200:
                 result = response.json()
+                print(result)
                 print(
                     f"\n📚 {result['user']}님의 채팅 기록 (총 {result['total_conversations']}개)"
                 )
@@ -307,7 +308,6 @@ class ChatClient:
         print()
         print("채팅 기록 관리:")
         print("  - /history: 서버 채팅 기록 보기")
-        print("  - /clear: 로컬 대화 기록 초기화")
         print("  - /clear-server: 서버 채팅 기록 삭제")
         print()
         print("기타:")
@@ -352,12 +352,6 @@ class ChatClient:
                 # 채팅 기록 보기
                 if user_input.lower() == "/history":
                     self.get_chat_history()
-                    continue
-
-                # 로컬 대화 기록 초기화
-                if user_input.lower() == "/clear":
-                    self.conversation_history = []
-                    print("🗑️ 로컬 대화 기록이 초기화되었습니다.")
                     continue
 
                 # 서버 채팅 기록 삭제

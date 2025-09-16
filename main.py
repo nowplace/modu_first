@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from models import User, ChatResponse, ConversationRequest, Message, LoginRequest
 
 from typing import List, Dict, Optional
-#from fastapi.templating import Jinja2Templates
+from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 import uvicorn
 import datetime
@@ -14,12 +14,12 @@ import httpx
 
 app = FastAPI(title="부트캠프 ChatGPT API 서버", version="0.0.1")
 app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
-#templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="templates")
 
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["127.0.0.1", "http://localhost:3000", "http://localhost:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -38,20 +38,59 @@ async def root():
     return {"message": "부트캠프 ChatGPT API 서버가 실행 중입니다"}
 
 
+#############
 @app.post("/user")
 async def create_user(data: User):
-    # 중복 사용자 확인
-    for user in users:
-        if user["username"] == data.username:
-            raise HTTPException(status_code=400, detail="이미 존재하는 사용자명입니다")
+    try:
+        print(f"[DEBUG] 받은 데이터: {data}")
 
-    user = {
-        "username": data.username,
-        "password": hashlib.sha256(data.password.encode("utf-8")).hexdigest(),
-        "created_at": datetime.datetime.now(),
-    }
-    users.append(user)
-    return {"message": "사용자가 성공적으로 생성되었습니다", "username": data.username}
+        # 중복 사용자 확인
+        for user in users:
+            if user["username"] == data.username:
+                print(f"[DEBUG] 중복 사용자: {data.username}")
+                raise HTTPException(
+                    status_code=400, detail="이미 존재하는 사용자명입니다"
+                )
+
+        user = {
+            "username": data.username,
+            "password": hashlib.sha256(data.password.encode("utf-8")).hexdigest(),
+            "created_at": datetime.datetime.now(),
+        }
+        users.append(user)
+
+        response_data = {
+            "message": "사용자가 성공적으로 생성되었습니다",
+            "username": data.username,
+        }
+        print(f"[DEBUG] 반환할 데이터: {response_data}")
+
+        return {"message": "사용자생성  성공", "username": response_data["username"]}
+
+    except HTTPException as e:
+        print(f"[DEBUG] HTTP 예외: {e}")
+        raise e
+    except Exception as e:
+        print(f"[DEBUG] 예상치 못한 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"서버 오류: {str(e)}")
+
+
+# @app.post("/user")
+# async def create_user(data: User):
+#     # 중복 사용자 확인
+#     print(data)
+#     for user in users:
+#         if user["username"] == data.username:
+#             print("duplicate user")
+#             raise HTTPException(status_code=400, detail="이미 존재하는 사용자명입니다")
+
+#     user = {
+#         "username": data.username,
+#         "password": hashlib.sha256(data.password.encode("utf-8")).hexdigest(),
+#         "created_at": datetime.datetime.now(),
+#     }
+#     users.append(user)
+#     return {"message": "사용자가 성공적으로 생성되었습니다", "username": data.username}
 
 
 # 세션에서 현재 사용자 정보 가져오기 (의존성 주입)
@@ -118,6 +157,7 @@ async def get_users(current_user: str = Depends(require_login)):
         {"username": user["username"], "created_at": user["created_at"]}
         for user in users
     ]
+
 
 @app.post("/chat/conversation", response_model=ChatResponse)
 async def conversation_chat(
