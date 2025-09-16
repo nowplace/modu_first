@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from models import User, ChatResponse, ConversationRequest, Message, LoginRequest
 
 from typing import List, Dict, Optional
-from fastapi.templating import Jinja2Templates
+#from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 import uvicorn
 import datetime
@@ -14,7 +14,7 @@ import httpx
 
 app = FastAPI(title="부트캠프 ChatGPT API 서버", version="0.0.1")
 app.add_middleware(SessionMiddleware, secret_key="your_secret_key")
-templates = Jinja2Templates(directory="templates")
+#templates = Jinja2Templates(directory="templates")
 
 # CORS 설정
 app.add_middleware(
@@ -118,16 +118,6 @@ async def get_users(current_user: str = Depends(require_login)):
         {"username": user["username"], "created_at": user["created_at"]}
         for user in users
     ]
-
-
-@app.get("/users/")
-async def get_users():
-    # 비밀번호는 제외하고 반환
-    return [
-        {"username": user["username"], "created_at": user["created_at"]}
-        for user in users
-    ]
-
 
 @app.post("/chat/conversation", response_model=ChatResponse)
 async def conversation_chat(
